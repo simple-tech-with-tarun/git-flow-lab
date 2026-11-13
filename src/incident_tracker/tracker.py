@@ -1,9 +1,20 @@
 from incident_tracker.models import Incident
+from incident_tracker.storage import JSONStorage
 
 
 class IncidentTracker:
-    def __init__(self):
+    def __init__(self, storage: JSONStorage | None = None):
         self._incidents: dict[str, Incident] = {}
+        self._storage = storage
+
+        if self._storage is not None:
+            self._incidents = {
+                incident.id: incident for incident in self._storage.load()
+            }
+
+    def _save(self) -> None:
+        if self._storage is not None:
+            self._storage.save(self.list_incidents())
 
     def create_incident(
         self,
@@ -20,6 +31,7 @@ class IncidentTracker:
         )
 
         self._incidents[incident.id] = incident
+        self._save()
         return incident
 
     def list_incidents(self) -> list[Incident]:
@@ -34,6 +46,7 @@ class IncidentTracker:
     def update_incident_status(self, incident_id: str, new_status: str) -> Incident:
         incident = self.get_incident(incident_id)
         incident.update_status(new_status)
+        self._save()
         return incident
 
     def filter_incidents(
