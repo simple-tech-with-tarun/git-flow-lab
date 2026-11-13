@@ -1,5 +1,6 @@
 import pytest
 
+from incident_tracker.storage import JSONStorage
 from incident_tracker.tracker import IncidentTracker
 
 
@@ -143,3 +144,58 @@ def test_filter_incidents_without_criteria():
     tracker.create_incident("Incident 2", "Description 2", "low", "P4")
 
     assert len(tracker.filter_incidents()) == 2
+
+
+def test_tracker_loads_incidents_from_storage(tmp_path):
+    storage = JSONStorage(tmp_path / "incidents.json")
+    original_tracker = IncidentTracker()
+
+    incident = original_tracker.create_incident(
+        "Database outage",
+        "Production database is unavailable.",
+        "critical",
+        "P1",
+    )
+
+    storage.save(original_tracker.list_incidents())
+
+    tracker = IncidentTracker(storage=storage)
+
+    assert tracker.get_incident(incident.id) == incident
+    assert len(tracker.list_incidents()) == 1
+
+
+def test_create_incident_persists_to_storage(tmp_path):
+    storage = JSONStorage(tmp_path / "incidents.json")
+    tracker = IncidentTracker(storage=storage)
+
+    incident = tracker.create_incident(
+        "API outage",
+        "Production API is unavailable.",
+        "critical",
+        "P1",
+    )
+
+    loaded_incidents = storage.load()
+
+    assert len(loaded_incidents) == 1
+    assert loaded_incidents[0] == incident
+
+
+def test_update_incident_status_persists_to_storage(tmp_path):
+    storage = JSONStorage(tmp_path / "incidents.json")
+    tracker = IncidentTracker(storage=storage)
+
+    incident = tracker.create_incident(
+        "Database outage",
+        "Production database is unavailable.",
+        "critical",
+        "P1",
+    )
+
+    tracker.update_incident_status(incident.id, "in_progress")
+
+    loaded_incidents = storage.load()
+
+    assert len(loaded_incidents) == 1
+    assert loaded_incidents[0].status == "in_progress"
