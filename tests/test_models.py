@@ -73,3 +73,55 @@ def test_invalid_severity_is_rejected():
 def test_invalid_priority_is_rejected():
     with pytest.raises(ValueError, match="Invalid priority"):
         Incident.create("Test incident", "Description", "high", "P5")
+
+
+def test_update_status_successfully():
+    incident = Incident.create("Test incident", "Description", "high", "P1")
+
+    incident.update_status("in_progress")
+
+    assert incident.status == "in_progress"
+
+
+def test_update_status_normalizes_input():
+    incident = Incident.create("Test incident", "Description", "high", "P1")
+
+    incident.update_status("IN_PROGRESS")
+
+    assert incident.status == "in_progress"
+
+
+def test_update_status_rejects_invalid_status():
+    incident = Incident.create("Test incident", "Description", "high", "P1")
+
+    with pytest.raises(ValueError, match="Invalid status"):
+        incident.update_status("pending")
+
+
+def test_update_status_rejects_invalid_transition():
+    incident = Incident.create("Test incident", "Description", "high", "P1")
+
+    with pytest.raises(ValueError, match="Cannot transition"):
+        incident.update_status("closed")
+
+
+def test_closed_incident_cannot_change_status():
+    incident = Incident.create("Test incident", "Description", "high", "P1")
+    incident.update_status("resolved")
+    incident.update_status("closed")
+
+    with pytest.raises(ValueError, match="Cannot transition"):
+        incident.update_status("open")
+
+
+def test_invalid_status_is_rejected():
+    with pytest.raises(ValueError, match="Invalid status"):
+        Incident(
+            title="Test incident",
+            description="Description",
+            severity="high",
+            priority="P1",
+            id="test-id",
+            status="pending",
+            created_at="2026-11-13T00:00:00+00:00",
+        )

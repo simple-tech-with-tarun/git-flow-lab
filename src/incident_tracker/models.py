@@ -4,6 +4,14 @@ from uuid import uuid4
 
 VALID_SEVERITIES = {"low", "medium", "high", "critical"}
 VALID_PRIORITIES = {"P1", "P2", "P3", "P4"}
+VALID_STATUSES = {"open", "in_progress", "resolved", "closed"}
+
+VALID_STATUS_TRANSITIONS = {
+    "open": {"in_progress", "resolved"},
+    "in_progress": {"open", "resolved"},
+    "resolved": {"in_progress", "closed"},
+    "closed": set(),
+}
 
 
 @dataclass
@@ -32,6 +40,25 @@ class Incident:
             raise ValueError(
                 f"Invalid priority. Choose from: {', '.join(sorted(VALID_PRIORITIES))}"
             )
+        if self.status not in VALID_STATUSES:
+            raise ValueError(
+                f"Invalid status. Choose from: {', '.join(sorted(VALID_STATUSES))}"
+            )
+
+    def update_status(self, new_status: str) -> None:
+        new_status = new_status.lower()
+
+        if new_status not in VALID_STATUSES:
+            raise ValueError(
+                f"Invalid status. Choose from: {', '.join(sorted(VALID_STATUSES))}"
+            )
+
+        if new_status not in VALID_STATUS_TRANSITIONS[self.status]:
+            raise ValueError(
+                f"Cannot transition incident from '{self.status}' to '{new_status}'."
+            )
+
+        self.status = new_status
 
     @classmethod
     def create(
