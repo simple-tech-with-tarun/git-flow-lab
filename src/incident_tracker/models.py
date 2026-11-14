@@ -40,6 +40,7 @@ class Incident:
             raise ValueError(
                 f"Invalid priority. Choose from: {', '.join(sorted(VALID_PRIORITIES))}"
             )
+        self.status = self.status.lower()
         if self.status not in VALID_STATUSES:
             raise ValueError(
                 f"Invalid status. Choose from: {', '.join(sorted(VALID_STATUSES))}"
