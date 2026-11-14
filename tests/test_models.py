@@ -114,6 +114,29 @@ def test_closed_incident_cannot_change_status():
         incident.update_status("open")
 
 
+@pytest.mark.parametrize(
+    ("status", "expected"),
+    [
+        ("OPEN", "open"),
+        ("IN_PROGRESS", "in_progress"),
+        ("Resolved", "resolved"),
+        ("CLOSED", "closed"),
+    ],
+)
+def test_incident_normalizes_status(status, expected):
+    incident = Incident(
+        title="Test incident",
+        description="Description",
+        severity="high",
+        priority="P1",
+        id="test-id",
+        status=status,
+        created_at="2026-11-13T00:00:00+00:00",
+    )
+
+    assert incident.status == expected
+
+
 def test_invalid_status_is_rejected():
     with pytest.raises(ValueError, match="Invalid status"):
         Incident(
